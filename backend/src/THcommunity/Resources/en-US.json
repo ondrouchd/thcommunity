@@ -1,0 +1,37 @@
+{
+  "Unauthorized": "Unauthorized access",
+  "NotFound": "Record not found",
+  "InternalError": "An internal server error occurred",
+  "Validation": {
+    "Required": "Field {0} is required",
+    "InvalidEmail": "Invalid email format",
+    "InvalidPhone": "Invalid phone format"
+  },
+  "Auth": {
+    "UserExists": "User already exists",
+    "InvalidCredentials": "Invalid credentials"
+  },
+  "Team": {
+    "AlreadyMember": "You are already a member of a team",
+    "InvalidInviteCode": "Invalid invite code",
+    "NotMember": "You are not a member of this team"
+  },
+  "Event": {
+    "NotFound": "Event not found",
+    "DeadlinePassed": "Response deadline has passed",
+    "CapacityFull": "Capacity is full",
+    "AddedToWaitlist": "You have been added to the waitlist"
+  },
+  "Survey": {
+    "Closed": "Survey is closed",
+    "Expired": "Survey has expired",
+    "AlreadyVoted": "You have already voted"
+  },
+  "Notifications": {
+    "NewEvent": "New event",
+    "EventReminder": "Event reminder",
+    "SpotOpened": "A spot opened up!",
+    "NewMessage": "New message",
+    "NewSurvey": "New survey"
+  }
+}

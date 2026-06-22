@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - AppSettings__Supabase__Url=${SUPABASE_URL}
+      - AppSettings__Supabase__PublishableKey=${SUPABASE_PUBLISHABLE_KEY}
+      - AppSettings__Supabase__SecretKey=${SUPABASE_SECRET_KEY}
+      - AppSettings__Cloudflare__R2AccountId=${R2_ACCOUNT_ID}
+      - AppSettings__Cloudflare__R2AccessKeyId=${R2_ACCESS_KEY}
+      - AppSettings__Cloudflare__R2SecretAccessKey=${R2_SECRET_KEY}
+      - AppSettings__Cloudflare__R2BucketName=thcommunity-media
+      - AppSettings__WebPush__VapidPublicKey=${VAPID_PUBLIC_KEY}
+      - AppSettings__WebPush__VapidPrivateKey=${VAPID_PRIVATE_KEY}
+      - AppSettings__WebPush__Subject=mailto:admin@thcommunity.cz
+      - Supabase__Url=${SUPABASE_URL}
+      - Supabase__PublishableKey=${SUPABASE_PUBLISHABLE_KEY}
+      - Supabase__SecretKey=${SUPABASE_SECRET_KEY}
+      - Cloudflare__R2AccountId=${R2_ACCOUNT_ID}
+      - Cloudflare__R2AccessKeyId=${R2_ACCESS_KEY}
+      - Cloudflare__R2SecretAccessKey=${R2_SECRET_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${SUPABASE_URL}
+        - VITE_SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
+        - VITE_API_URL=http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend

@@ -1,0 +1,176 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "search": "Search",
+    "noResults": "No results",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "auth": {
+    "login": "Log in",
+    "logout": "Log out",
+    "register": "Register",
+    "email": "Email",
+    "phone": "Phone",
+    "displayName": "Display name",
+    "loginWithGoogle": "Log in with Google",
+    "loginWithFacebook": "Log in with Facebook",
+    "loginWithMagicLink": "Log in with magic link",
+    "magicLinkSent": "Login link has been sent to your email",
+    "welcomeBack": "Welcome back!",
+    "createAccount": "Create account"
+  },
+  "navigation": {
+    "home": "Home",
+    "chat": "Chat",
+    "events": "Events",
+    "team": "Team",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "team": {
+    "title": "Team",
+    "members": "Members",
+    "settings": "Team settings",
+    "invite": "Invite members",
+    "inviteCode": "Invite code",
+    "joinTeam": "Join team",
+    "leaveTeam": "Leave team",
+    "createTeam": "Create team",
+    "teamName": "Team name",
+    "description": "Description",
+    "roles": {
+      "admin": "Administrator",
+      "coach": "Coach",
+      "player": "Player"
+    },
+    "positions": {
+      "player": "Player",
+      "goalie": "Goalie"
+    },
+    "noTeam": "You are not a member of any team",
+    "joinOrCreate": "Join an existing team or create a new one"
+  },
+  "events": {
+    "title": "Events",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "createEvent": "Create event",
+    "editEvent": "Edit event",
+    "eventDetails": "Event details",
+    "eventType": {
+      "training": "Training",
+      "match": "Match"
+    },
+    "startTime": "Start time",
+    "endTime": "End time",
+    "location": "Location",
+    "capacity": "Capacity",
+    "players": "Players",
+    "goalies": "Goalies",
+    "deadline": "Response deadline",
+    "price": "Price",
+    "response": {
+      "title": "Your response",
+      "going": "I'm going",
+      "goingAsGoalie": "I'm going as goalie",
+      "notGoing": "I'm not going",
+      "note": "Note",
+      "changeResponse": "Change response"
+    },
+    "waitlist": {
+      "title": "Waitlist",
+      "position": "Queue position",
+      "onWaitlist": "You are on the waitlist"
+    },
+    "attendance": {
+      "title": "Attendance",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "noResponse": "No response"
+    },
+    "statistics": "Statistics"
+  },
+  "chat": {
+    "title": "Chat",
+    "sendMessage": "Write a message...",
+    "reply": "Reply",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleted": "Message was deleted",
+    "edited": "edited",
+    "reactions": "Reactions",
+    "attachImage": "Attach image",
+    "attachVideo": "Attach video"
+  },
+  "surveys": {
+    "title": "Surveys",
+    "createSurvey": "Create survey",
+    "question": "Question",
+    "options": "Options",
+    "addOption": "Add option",
+    "multipleAnswers": "Allow multiple answers",
+    "anonymous": "Anonymous voting",
+    "expiresAt": "Expires at",
+    "vote": "Vote",
+    "votes": "votes",
+    "closed": "Survey is closed",
+    "expired": "Survey has expired",
+    "closeSurvey": "Close survey",
+    "results": "Results"
+  },
+  "statistics": {
+    "title": "Statistics",
+    "attendance": "Attendance",
+    "totalEvents": "Total events",
+    "attended": "Attended",
+    "missed": "Missed",
+    "attendanceRate": "Attendance rate",
+    "trainings": "Trainings",
+    "matches": "Matches",
+    "teamStats": "Team statistics",
+    "memberStats": "Member statistics"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "notifications": "Notifications",
+    "language": "Language",
+    "theme": "Theme",
+    "pricing": "Pricing",
+    "capacity": "Capacity",
+    "enableNotifications": "Enable notifications",
+    "eventCreated": "New event",
+    "eventReminder": "Event reminder",
+    "spotOpened": "Spot opened",
+    "reminderHours": "Hours before event"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit profile",
+    "changeAvatar": "Change photo",
+    "myStatistics": "My statistics"
+  },
+  "notifications": {
+    "newEvent": "New event",
+    "eventReminder": "Event reminder",
+    "spotOpened": "A spot opened up!",
+    "newMessage": "New message",
+    "newSurvey": "New survey"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Connection error. Check your internet connection.",
+    "unauthorized": "You don't have permission for this action.",
+    "notFound": "The requested record was not found."
+  }
+}

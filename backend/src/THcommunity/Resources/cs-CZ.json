@@ -1,0 +1,37 @@
+{
+  "Unauthorized": "Neautorizovaný přístup",
+  "NotFound": "Záznam nenalezen",
+  "InternalError": "Došlo k interní chybě serveru",
+  "Validation": {
+    "Required": "Pole {0} je povinné",
+    "InvalidEmail": "Neplatný formát e-mailu",
+    "InvalidPhone": "Neplatný formát telefonu"
+  },
+  "Auth": {
+    "UserExists": "Uživatel již existuje",
+    "InvalidCredentials": "Neplatné přihlašovací údaje"
+  },
+  "Team": {
+    "AlreadyMember": "Již jste členem týmu",
+    "InvalidInviteCode": "Neplatný kód pozvánky",
+    "NotMember": "Nejste členem tohoto týmu"
+  },
+  "Event": {
+    "NotFound": "Událost nenalezena",
+    "DeadlinePassed": "Termín pro odpověď již vypršel",
+    "CapacityFull": "Kapacita je plná",
+    "AddedToWaitlist": "Byli jste přidáni na čekací listinu"
+  },
+  "Survey": {
+    "Closed": "Anketa je uzavřena",
+    "Expired": "Anketa vypršela",
+    "AlreadyVoted": "Již jste hlasovali"
+  },
+  "Notifications": {
+    "NewEvent": "Nová událost",
+    "EventReminder": "Připomínka události",
+    "SpotOpened": "Uvolnilo se místo!",
+    "NewMessage": "Nová zpráva",
+    "NewSurvey": "Nová anketa"
+  }
+}
