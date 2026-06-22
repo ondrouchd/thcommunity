@@ -14,6 +14,7 @@ import { EventDetailPage } from './pages/EventDetailPage'
 import { TeamPage } from './pages/TeamPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SettingsPage } from './pages/SettingsPage'
+import { SurveysPage } from './pages/SurveysPage'
 
 // Components
 import { Layout } from './components/Layout'
@@ -119,6 +120,7 @@ function App() {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/:id" element={<EventDetailPage />} />
+        <Route path="/surveys" element={<SurveysPage />} />
         <Route path="/team" element={<TeamPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />

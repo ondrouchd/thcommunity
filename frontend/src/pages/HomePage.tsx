@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
-import { Calendar, MessageCircle, Users, TrendingUp, MapPin } from 'lucide-react'
+import { Calendar, MessageCircle, Users, TrendingUp, MapPin, BarChart3 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { eventsApi } from '../lib/api'
 import { formatDateTime } from '../lib/format'
@@ -26,6 +26,7 @@ export function HomePage() {
   const quickActions = [
     { to: '/events', icon: Calendar, label: t('navigation.events'), color: 'bg-blue-500' },
     { to: '/chat', icon: MessageCircle, label: t('navigation.chat'), color: 'bg-green-500' },
+    { to: '/surveys', icon: BarChart3, label: t('surveys.title'), color: 'bg-pink-500' },
     { to: '/team', icon: Users, label: t('navigation.team'), color: 'bg-purple-500' },
     { to: '/profile', icon: TrendingUp, label: t('statistics.title'), color: 'bg-orange-500' },
   ]
