@@ -153,7 +153,10 @@
     "eventCreated": "Nová událost",
     "eventReminder": "Připomínka události",
     "spotOpened": "Uvolnění místa",
-    "reminderHours": "Hodin před událostí"
+    "reminderHours": "Hodin před událostí",
+    "pushUnsupported": "Push oznámení nejsou v tomto prohlížeči podporována.",
+    "pushDenied": "Oznámení jsou v prohlížeči zablokována. Povolte je v nastavení prohlížeče.",
+    "pushNotConfigured": "Push oznámení nejsou na serveru nakonfigurována."
   },
   "profile": {
     "title": "Profil",

@@ -13,6 +13,8 @@ import { EventsPage } from './pages/EventsPage'
 import { EventDetailPage } from './pages/EventDetailPage'
 import { TeamPage } from './pages/TeamPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { ProfileEditPage } from './pages/ProfileEditPage'
+import { ProfileStatisticsPage } from './pages/ProfileStatisticsPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SurveysPage } from './pages/SurveysPage'
 
@@ -123,6 +125,8 @@ function App() {
         <Route path="/surveys" element={<SurveysPage />} />
         <Route path="/team" element={<TeamPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/edit" element={<ProfileEditPage />} />
+        <Route path="/profile/statistics" element={<ProfileStatisticsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
 

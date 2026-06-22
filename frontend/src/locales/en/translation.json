@@ -153,7 +153,10 @@
     "eventCreated": "New event",
     "eventReminder": "Event reminder",
     "spotOpened": "Spot opened",
-    "reminderHours": "Hours before event"
+    "reminderHours": "Hours before event",
+    "pushUnsupported": "Push notifications are not supported in this browser.",
+    "pushDenied": "Notifications are blocked. Please enable them in your browser settings.",
+    "pushNotConfigured": "Push notifications are not configured on the server."
   },
   "profile": {
     "title": "Profile",

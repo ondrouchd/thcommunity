@@ -258,8 +258,9 @@ export const usersApi = {
 
 // Push Notifications API
 export const pushApi = {
-  subscribe: (data: { endpoint: string; p256dh: string; auth: string }) => 
+  getVapidKey: () => api.get<{ public_key: string | null }>('/api/push/vapid-public-key'),
+  subscribe: (data: { endpoint: string; p256dh: string; auth: string }) =>
     api.post('/api/push/subscribe', data),
-  unsubscribe: (endpoint: string) => 
+  unsubscribe: (endpoint: string) =>
     api.post('/api/push/unsubscribe', { endpoint }),
 }
