@@ -1,11 +1,27 @@
 import { useTranslation } from 'react-i18next'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
-import { Calendar, MessageCircle, Users, TrendingUp } from 'lucide-react'
+import { Calendar, MessageCircle, Users, TrendingUp, MapPin } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { eventsApi } from '../lib/api'
+import { formatDateTime } from '../lib/format'
+import type { Event } from '../lib/database.types'
 
 export function HomePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { profile } = useAuthStore()
+  const [upcoming, setUpcoming] = useState<Event[]>([])
+  const [loadingEvents, setLoadingEvents] = useState(false)
+
+  useEffect(() => {
+    if (!profile?.team_id) return
+    setLoadingEvents(true)
+    eventsApi
+      .getUpcoming(profile.team_id, 3)
+      .then((data) => setUpcoming(data ?? []))
+      .catch((err) => console.error('Error fetching upcoming events:', err))
+      .finally(() => setLoadingEvents(false))
+  }, [profile?.team_id])
 
   const quickActions = [
     { to: '/events', icon: Calendar, label: t('navigation.events'), color: 'bg-blue-500' },
@@ -82,9 +98,42 @@ export function HomePage() {
               {t('common.next')} →
             </Link>
           </div>
-          <div className="text-center py-6 text-gray-500">
-            {t('common.noResults')}
-          </div>
+          {loadingEvents ? (
+            <div className="text-center py-6 text-gray-500">{t('common.loading')}</div>
+          ) : upcoming.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">{t('common.noResults')}</div>
+          ) : (
+            <div className="space-y-2">
+              {upcoming.map((event) => (
+                <Link
+                  key={event.id}
+                  to={`/events/${event.id}`}
+                  className="block p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-gray-800 truncate">{event.title}</span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-medium shrink-0 ${
+                        event.event_type === 'Match' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                      }`}
+                    >
+                      {event.event_type === 'Match' ? t('events.eventType.match') : t('events.eventType.training')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>{formatDateTime(event.start_time, i18n.language)}</span>
+                  </div>
+                  {event.location && (
+                    <div className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
+                      <MapPin className="w-4 h-4" />
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

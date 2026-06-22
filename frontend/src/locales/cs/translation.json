@@ -67,6 +67,7 @@
     "createEvent": "Vytvořit událost",
     "editEvent": "Upravit událost",
     "eventDetails": "Detail události",
+    "eventTitle": "Název události",
     "eventType": {
       "training": "Trénink",
       "match": "Zápas"

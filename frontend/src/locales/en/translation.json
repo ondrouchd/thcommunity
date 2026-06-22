@@ -67,6 +67,7 @@
     "createEvent": "Create event",
     "editEvent": "Edit event",
     "eventDetails": "Event details",
+    "eventTitle": "Event title",
     "eventType": {
       "training": "Training",
       "match": "Match"

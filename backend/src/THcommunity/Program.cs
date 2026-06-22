@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Localization;
 using THcommunity;
 using THcommunity.Configuration;
@@ -12,6 +14,14 @@ builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, relo
 
 // Add localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+// Align HTTP JSON contract with the database / frontend: snake_case property names
+// and string enum values (e.g. "Training", "Player") matching the Supabase schema.
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 // Add services
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
