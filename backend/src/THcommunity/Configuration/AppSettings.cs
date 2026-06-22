@@ -7,6 +7,16 @@ public class AppSettings
     public SupabaseSettings Supabase { get; set; } = new();
     public CloudflareSettings Cloudflare { get; set; } = new();
     public WebPushSettings WebPush { get; set; } = new();
+    public RegistrationSettings Registration { get; set; } = new();
+}
+
+public class RegistrationSettings
+{
+    /// <summary>
+    /// Optional invite code of a team that newly registered users are automatically
+    /// added to. When empty, users register without a team and join or create one later.
+    /// </summary>
+    public string? DefaultTeamInviteCode { get; set; }
 }
 
 public class SupabaseSettings

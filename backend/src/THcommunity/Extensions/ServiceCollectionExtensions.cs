@@ -136,6 +136,23 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddPushNotifications(this IServiceCollection services, IConfiguration configuration)
     {
+        // VAPID credentials live under the "Vapid" configuration section; project them onto
+        // AppSettings.WebPush so PushNotificationService is constructed with valid keys.
+        services.PostConfigure<AppSettings>(settings =>
+        {
+            var vapid = configuration.GetSection("Vapid");
+            var subject = vapid["Subject"];
+            var publicKey = vapid["PublicKey"];
+            var privateKey = vapid["PrivateKey"];
+
+            if (!string.IsNullOrWhiteSpace(subject))
+                settings.WebPush.Subject = subject;
+            if (!string.IsNullOrWhiteSpace(publicKey))
+                settings.WebPush.VapidPublicKey = publicKey;
+            if (!string.IsNullOrWhiteSpace(privateKey))
+                settings.WebPush.VapidPrivateKey = privateKey;
+        });
+
         return services;
     }
 }

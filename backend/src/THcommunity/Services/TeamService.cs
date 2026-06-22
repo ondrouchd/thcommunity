@@ -52,15 +52,13 @@ public class TeamService : ITeamService
         
         var createdTeam = await _db.InsertAsync("teams", team);
 
-        // TODO: Create default settings - model needs to be updated to match database schema
-        // The database has pricing, capacity, notifications as separate JSONB columns
-        // var settings = new TeamSettingsEntity
-        // {
-        //     Id = Guid.NewGuid(),
-        //     TeamId = createdTeam.Id,
-        //     SettingsJson = System.Text.Json.JsonSerializer.Serialize(new TeamSettingsData())
-        // };
-        // await _db.InsertAsync("team_settings", settings);
+        // Create default settings row; the database fills pricing/capacity/notifications
+        // from its column defaults when those keys are omitted from the insert.
+        await _db.InsertAsync("team_settings", new TeamSettingsEntity
+        {
+            Id = Guid.NewGuid(),
+            TeamId = createdTeam.Id
+        });
 
         // Update creator as admin
         await _db.UpdateAsync<User>("users", $"id=eq.{creatorUserId}", new 
@@ -81,7 +79,18 @@ public class TeamService : ITeamService
 
     public async Task<TeamSettingsEntity?> GetSettingsAsync(Guid teamId)
     {
-        return await _db.GetSingleAsync<TeamSettingsEntity>("team_settings", $"team_id=eq.{teamId}");
+        var settings = await _db.GetSingleAsync<TeamSettingsEntity>("team_settings", $"team_id=eq.{teamId}");
+        if (settings != null)
+        {
+            return settings;
+        }
+
+        // Lazily provision default settings for teams created before settings existed.
+        return await _db.InsertAsync("team_settings", new TeamSettingsEntity
+        {
+            Id = Guid.NewGuid(),
+            TeamId = teamId
+        });
     }
 
     public async Task<TeamSettingsEntity> UpdateSettingsAsync(TeamSettingsEntity settings)
@@ -190,17 +199,4 @@ public class TeamService : ITeamService
         return new string(Enumerable.Repeat(chars, 8)
             .Select(s => s[random.Next(s.Length)]).ToArray());
     }
-}
-
-public class TeamSettingsData
-{
-    public int DefaultCapacityPlayers { get; set; } = 18;
-    public int DefaultCapacityGoalies { get; set; } = 2;
-    public Dictionary<string, decimal> PricingTiers { get; set; } = new()
-    {
-        { "goalie", 0 },
-        { "tier1", 400 },
-        { "tier2", 350 },
-        { "tier3", 300 }
-    };
 }

@@ -8,7 +8,6 @@ let cachedToken: string | null = null
 
 export function setApiToken(token: string | null) {
   cachedToken = token
-  console.log('API token cached:', token ? 'yes' : 'no')
 }
 
 class ApiClient {
@@ -20,7 +19,6 @@ class ApiClient {
     
     // Fall back to getting fresh token
     try {
-      console.log('Getting fresh token from Supabase...')
       const { data: { session }, error } = await supabase.auth.getSession()
       if (error) {
         console.error('Error getting session:', error)
@@ -48,7 +46,6 @@ class ApiClient {
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
-      console.log('Request with token:', endpoint, 'token length:', token.length)
     } else {
       console.warn('API request without token:', endpoint)
     }

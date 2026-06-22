@@ -1,5 +1,7 @@
 namespace THcommunity.Models;
 
+using System.Text.Json;
+
 public class Team
 {
     public Guid Id { get; set; }
@@ -15,7 +17,9 @@ public class TeamSettingsEntity
 {
     public Guid Id { get; set; }
     public Guid TeamId { get; set; }
-    public string SettingsJson { get; set; } = "{}";
+    public JsonElement? Pricing { get; set; }
+    public JsonElement? Capacity { get; set; }
+    public JsonElement? Notifications { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
 

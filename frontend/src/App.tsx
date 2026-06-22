@@ -29,7 +29,6 @@ function App() {
   useEffect(() => {
     // Timeout safety - never stay loading forever
     const timeout = setTimeout(() => {
-      console.log('Loading timeout - forcing to false')
       setLoading(false)
     }, 5000)
 

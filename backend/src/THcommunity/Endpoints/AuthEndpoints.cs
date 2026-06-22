@@ -1,5 +1,7 @@
+using THcommunity.Configuration;
 using THcommunity.Extensions;
 using THcommunity.Services;
+using Microsoft.Extensions.Options;
 
 namespace THcommunity;
 
@@ -14,6 +16,7 @@ public static class AuthEndpoints
             RegisterRequest request,
             IUserService userService,
             ITeamService teamService,
+            IOptions<AppSettings> appSettings,
             HttpContext context) =>
         {
             var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("AuthEndpoints");
@@ -34,8 +37,14 @@ public static class AuthEndpoints
                 return Results.Conflict(new { message = "Uživatel již existuje" });
             }
 
-            // Get the default team (using PL9PLZ8X for now)
-            var defaultTeam = await teamService.GetByInviteCodeAsync("PL9PLZ8X");
+            // Optionally auto-assign new users to a configured default team.
+            var defaultInviteCode = appSettings.Value.Registration.DefaultTeamInviteCode;
+            Guid? defaultTeamId = null;
+            if (!string.IsNullOrWhiteSpace(defaultInviteCode))
+            {
+                var defaultTeam = await teamService.GetByInviteCodeAsync(defaultInviteCode);
+                defaultTeamId = defaultTeam?.Id;
+            }
 
             var user = new Models.User
             {
@@ -44,7 +53,7 @@ public static class AuthEndpoints
                 Phone = request.Phone,
                 DisplayName = request.DisplayName,
                 Position = request.Position,
-                TeamId = defaultTeam?.Id  // Auto-assign to default team
+                TeamId = defaultTeamId
             };
 
             try
