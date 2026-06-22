@@ -1,0 +1,151 @@
+# Self-hosted, Supabase-compatible stack for running on Azure or AWS WITHOUT a
+# Supabase project. The database is a MANAGED PostgreSQL you provision yourself
+# (Azure Database for PostgreSQL Flexible Server, or AWS RDS / Aurora PostgreSQL);
+# everything else runs as containers (e.g. on Azure Container Apps / AWS ECS or a VM).
+#
+#   1. Provision a managed PostgreSQL and copy .env.aws.example or .env.azure.example
+#      to .env.cloud, then fill in the values.
+#   2. docker compose --env-file .env.cloud -f docker-compose.cloud.yml up --build
+#
+# The one-time `migrate` service applies database/000_cloud_bootstrap.sql (Supabase
+# roles, auth schema, auth.uid(), realtime publication) followed by the app migrations.
+#
+# Alternatively, to use Azure Entra / AWS Cognito as the identity provider instead of
+# the bundled GoTrue, set the AppSettings__Auth__* variables on the backend (see README)
+# and remove the auth/rest/gateway services.
+
+services:
+  migrate:
+    image: postgres:15
+    environment:
+      ADMIN_URL: "postgres://${DB_ADMIN_USER}:${DB_ADMIN_PASSWORD}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME}?sslmode=${DB_SSLMODE:-require}"
+      AUTHENTICATOR_PASSWORD: ${AUTHENTICATOR_PASSWORD}
+      AUTH_ADMIN_PASSWORD: ${AUTH_ADMIN_PASSWORD}
+    volumes:
+      - ./database:/migrations:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "Bootstrapping managed PostgreSQL..."
+        psql "$$ADMIN_URL" -v ON_ERROR_STOP=1 \
+          -v authenticator_password="$$AUTHENTICATOR_PASSWORD" \
+          -v auth_admin_password="$$AUTH_ADMIN_PASSWORD" \
+          -f /migrations/000_cloud_bootstrap.sql
+        if [ "$$(psql "$$ADMIN_URL" -tAc "SELECT to_regclass('public.teams')")" = "teams" ]; then
+          echo "App schema already present - skipping app migrations."
+        else
+          for f in 001_initial_schema.sql 002_rls_policies.sql 003_realtime.sql 004_security_fixes.sql; do
+            echo "  -> $$f"
+            psql "$$ADMIN_URL" -v ON_ERROR_STOP=1 -f /migrations/$$f
+          done
+        fi
+        echo "Database ready."
+    restart: "no"
+
+  auth:
+    image: supabase/gotrue:v2.177.0
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: "9999"
+      API_EXTERNAL_URL: ${PUBLIC_AUTH_URL}
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: "postgres://supabase_auth_admin:${AUTH_ADMIN_PASSWORD}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME}?search_path=auth&sslmode=${DB_SSLMODE:-require}"
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_URI_ALLOW_LIST: "${SITE_URL},${SITE_URL}/*"
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_ISSUER: ${PUBLIC_AUTH_URL}/auth/v1
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: "3600"
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "false"
+      GOTRUE_SMTP_HOST: ${SMTP_HOST}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT:-587}
+      GOTRUE_SMTP_USER: ${SMTP_USER}
+      GOTRUE_SMTP_PASS: ${SMTP_PASS}
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL:-admin@thcommunity.local}
+      GOTRUE_SMTP_SENDER_NAME: THcommunity
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+    restart: unless-stopped
+
+  rest:
+    image: postgrest/postgrest:v12.2.8
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      PGRST_DB_URI: "postgres://authenticator:${AUTHENTICATOR_PASSWORD}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME}?sslmode=${DB_SSLMODE:-require}"
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+    restart: unless-stopped
+
+  gateway:
+    image: nginx:alpine
+    depends_on:
+      - auth
+      - rest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./local/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      gateway:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      AppSettings__Supabase__Url: ${PUBLIC_AUTH_URL}
+      AppSettings__Supabase__InternalUrl: http://gateway:8000
+      AppSettings__Supabase__JwtSecret: ${JWT_SECRET}
+      AppSettings__Supabase__PublishableKey: ${ANON_KEY}
+      AppSettings__Supabase__SecretKey: ${SERVICE_KEY}
+      Frontend__Url: ${SITE_URL}
+      # Object storage (AWS S3 native / Azure via S3-compatible gateway / R2).
+      AppSettings__Storage__Provider: ${STORAGE_PROVIDER:-}
+      AppSettings__Storage__ServiceUrl: ${STORAGE_SERVICE_URL:-}
+      AppSettings__Storage__Region: ${STORAGE_REGION:-}
+      AppSettings__Storage__BucketName: ${STORAGE_BUCKET:-}
+      AppSettings__Storage__PublicUrl: ${STORAGE_PUBLIC_URL:-}
+      AppSettings__Storage__AccessKeyId: ${STORAGE_ACCESS_KEY:-}
+      AppSettings__Storage__SecretAccessKey: ${STORAGE_SECRET_KEY:-}
+    ports:
+      - "5000:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${PUBLIC_AUTH_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${ANON_KEY}
+        VITE_API_URL: ${PUBLIC_API_URL}
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

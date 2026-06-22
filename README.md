@@ -178,3 +178,121 @@ cd frontend
 npm run build
 ```
 
+## Provoz na Azure / AWS místo Supabase
+
+Řešení je cloud-agnostické – vedle Supabase ho lze provozovat na **Azure** nebo
+**AWS**. Architektura má tři poskytovatelsky závislé části; každou lze vyměnit
+nezávisle a podpora Supabase zůstává zachovaná:
+
+| Část | Supabase | Azure | AWS |
+|------|----------|-------|-----|
+| Databáze | Supabase Postgres | Azure Database for PostgreSQL | AWS RDS / Aurora PostgreSQL |
+| Autentizace (JWT) | Supabase Auth (GoTrue) | Azure Entra (AD) **nebo** self-hosted GoTrue | AWS Cognito **nebo** self-hosted GoTrue |
+| Úložiště médií | Cloudflare R2 | S3-kompatibilní endpoint | AWS S3 (nativně) |
+| Realtime | Supabase Realtime | — (viz omezení) | — (viz omezení) |
+
+Backend zůstává stejný; přepíná se konfigurací (`AppSettings__Auth__*`,
+`AppSettings__Storage__*`). Když je `Auth:Provider` prázdný, chová se jako dřív
+(Supabase).
+
+### Varianta A – self-hosted stack nad managed Postgres
+
+Stejné Supabase-kompatibilní služby (GoTrue + PostgREST) jako v lokálním stacku,
+ale databáze běží jako managed PostgreSQL v cloudu. Funguje celá aplikace včetně
+frontendu a přihlášení přes magic link.
+
+1. Založ managed PostgreSQL (Azure Database for PostgreSQL Flexible Server nebo
+   AWS RDS/Aurora PostgreSQL).
+2. Zkopíruj příslušný vzor a vyplň hodnoty:
+
+   ```bash
+   cp .env.aws.example .env.cloud      # nebo .env.azure.example
+   ```
+
+3. Vygeneruj `ANON_KEY` a `SERVICE_KEY` podepsané `JWT_SECRET` (HS256):
+
+   ```bash
+   python - <<'PY'
+   import base64, hmac, hashlib, json
+   secret = b"super-secret-jwt-token-with-at-least-32-characters-long"  # = JWT_SECRET
+   b = lambda d: base64.urlsafe_b64encode(d).rstrip(b"=")
+   def mint(role):
+       seg = b(json.dumps({"alg":"HS256","typ":"JWT"}).encode()) + b"." + \
+             b(json.dumps({"role":role,"iss":"supabase-demo","iat":1641769200,"exp":1893456000}).encode())
+       return (seg + b"." + b(hmac.new(secret, seg, hashlib.sha256).digest())).decode()
+   print("ANON_KEY   =", mint("anon"))
+   print("SERVICE_KEY=", mint("service_role"))
+   PY
+   ```
+
+4. Spusť stack:
+
+   ```bash
+   docker compose --env-file .env.cloud -f docker-compose.cloud.yml up --build
+   ```
+
+Jednorázová služba `migrate` nejdřív spustí `database/000_cloud_bootstrap.sql`
+(vytvoří Supabase role `anon`/`authenticated`/`service_role`/`authenticator`/
+`supabase_auth_admin`, schéma `auth`, funkce `auth.uid()`/`auth.role()` a publikaci
+`supabase_realtime`), poté aplikuje migrace `001`–`004`. Bootstrap vyžaduje roli
+s oprávněním zakládat role a `BYPASSRLS` (`rds_superuser` na AWS RDS,
+`azure_pg_admin` na Azure Flexible Server). Pro Realtime nastav na serveru
+`wal_level = logical`.
+
+### Varianta B – nativní Azure Entra / AWS Cognito
+
+Backend umí ověřovat JWT přímo z poskytovatele identity přes standardní OpenID
+Connect discovery (klíče se načítají a rotují automaticky). Nastav na backendu:
+
+**AWS Cognito**
+
+```
+AppSettings__Auth__Provider=cognito
+AppSettings__Auth__Region=eu-central-1
+AppSettings__Auth__UserPoolId=eu-central-1_XXXXXXXXX
+AppSettings__Auth__Audience=<app-client-id>
+```
+
+**Azure Entra (AD)**
+
+```
+AppSettings__Auth__Provider=azuread
+AppSettings__Auth__TenantId=<tenant-id>
+AppSettings__Auth__Audience=<application-client-id>
+# Pro Entra External ID / B2C user flow místo TenantId:
+# AppSettings__Auth__MetadataAddress=https://<tenant>.ciamlogin.com/<tenant>/v2.0/.well-known/openid-configuration
+```
+
+Případně libovolný OIDC poskytovatel: `AppSettings__Auth__Provider=oidc` +
+`Authority` (nebo `MetadataAddress`), `Audience`, volitelně `Issuer`. Při nativní
+auth nepotřebuješ služby `auth`/`rest`/`gateway` pro ověřování API; frontend by pak
+získával token přes SDK daného poskytovatele (MSAL pro Entra, Amplify pro Cognito).
+
+### Úložiště médií
+
+Backend komunikuje protokolem S3, takže funguje s libovolným S3-kompatibilním
+úložištěm:
+
+```
+# AWS S3 (nativně)
+AppSettings__Storage__Provider=s3
+AppSettings__Storage__Region=eu-central-1
+AppSettings__Storage__BucketName=thcommunity-media
+AppSettings__Storage__PublicUrl=https://thcommunity-media.s3.eu-central-1.amazonaws.com
+AppSettings__Storage__AccessKeyId=...
+AppSettings__Storage__SecretAccessKey=...
+
+# Cloudflare R2 / MinIO / S3-kompatibilní endpoint (Azure Blob přes S3 bránu)
+AppSettings__Storage__ServiceUrl=https://<endpoint>
+```
+
+Když je sekce `Storage` prázdná, použijí se zpětně kompatibilní proměnné
+`Cloudflare__R2*`.
+
+### Omezení
+
+- **Realtime** (živá aktualizace chatu) není v self-hosted stacku nasazený; chat
+  funguje přes API, degraduje jen aktualizace bez refreshe.
+- Nativní Azure Blob přes oficiální SDK není implementován – použij S3-kompatibilní
+  endpoint, nebo AWS S3 / R2.
+

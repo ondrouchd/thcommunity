@@ -27,7 +27,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 builder.Services.Configure<TeamSettings>(builder.Configuration.GetSection("TeamSettings"));
 builder.Services.AddSupabaseClient(builder.Configuration);
-builder.Services.AddCloudflareR2(builder.Configuration);
+builder.Services.AddObjectStorage(builder.Configuration);
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddPushNotifications(builder.Configuration);

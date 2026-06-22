@@ -24,9 +24,9 @@ public class StorageService : IStorageService
         _s3Client = s3Client;
         _logger = logger;
         
-        var cloudflareSettings = settings.Value.Cloudflare;
-        _bucketName = cloudflareSettings.R2BucketName;
-        _publicUrl = cloudflareSettings.R2PublicUrl;
+        var storage = settings.Value.Storage;
+        _bucketName = storage.BucketName;
+        _publicUrl = storage.PublicUrl?.TrimEnd('/') ?? string.Empty;
     }
 
     public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string contentType)

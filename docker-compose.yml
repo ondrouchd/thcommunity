@@ -33,6 +33,29 @@ services:
       - Vapid__Subject=${VAPID_SUBJECT:-mailto:admin@thcommunity.cz}
       - Vapid__PublicKey=${VAPID_PUBLIC_KEY}
       - Vapid__PrivateKey=${VAPID_PRIVATE_KEY}
+      # --- Cloud-agnostic auth (optional) ------------------------------------
+      # Leave AUTH_PROVIDER empty to keep using Supabase (above). Set it to
+      # azuread / entra / cognito / oidc to validate tokens issued by Azure
+      # Entra (AD) or AWS Cognito instead of Supabase.
+      - AppSettings__Auth__Provider=${AUTH_PROVIDER:-}
+      - AppSettings__Auth__Authority=${AUTH_AUTHORITY:-}
+      - AppSettings__Auth__MetadataAddress=${AUTH_METADATA_ADDRESS:-}
+      - AppSettings__Auth__Issuer=${AUTH_ISSUER:-}
+      - AppSettings__Auth__Audience=${AUTH_AUDIENCE:-}
+      - AppSettings__Auth__Region=${AUTH_REGION:-}
+      - AppSettings__Auth__UserPoolId=${AUTH_USER_POOL_ID:-}
+      - AppSettings__Auth__TenantId=${AUTH_TENANT_ID:-}
+      # --- Cloud-agnostic object storage (optional) --------------------------
+      # AWS S3 native (set STORAGE_REGION, leave STORAGE_SERVICE_URL empty),
+      # Cloudflare R2 or MinIO (set STORAGE_SERVICE_URL). Falls back to the
+      # legacy Cloudflare R2 variables above when left empty.
+      - AppSettings__Storage__Provider=${STORAGE_PROVIDER:-}
+      - AppSettings__Storage__ServiceUrl=${STORAGE_SERVICE_URL:-}
+      - AppSettings__Storage__Region=${STORAGE_REGION:-}
+      - AppSettings__Storage__BucketName=${STORAGE_BUCKET:-}
+      - AppSettings__Storage__PublicUrl=${STORAGE_PUBLIC_URL:-}
+      - AppSettings__Storage__AccessKeyId=${STORAGE_ACCESS_KEY:-}
+      - AppSettings__Storage__SecretAccessKey=${STORAGE_SECRET_KEY:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 15s

@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+!.env.aws.example
+!.env.azure.example
 appsettings.Development.json
 appsettings.Local.json
 appsettings.*.json
