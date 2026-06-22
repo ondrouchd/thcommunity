@@ -117,7 +117,55 @@ Poznámky:
   resp. ukládání médií, vypnuté.
 - CORS na backendu je pro tento běh nastaven na `http://localhost:3000`.
 
-## Testy a build
+## Lokální běh bez Supabase (DB i auth v Dockeru)
+
+Pokud nechceš zakládat projekt na Supabase, existuje samostatný, plně lokální
+stack, který spustí databázi i autentizaci v Dockeru. Nepotřebuješ žádné cloudové
+služby ani `.env` – demo klíče jsou součástí compose souboru (slouží **výhradně**
+pro lokální vývoj).
+
+Stack obsahuje: Postgres (image `supabase/postgres` s rolemi `anon`/`authenticated`/
+`service_role`, schématem `auth`, funkcí `auth.uid()` a publikací `supabase_realtime`),
+PostgREST, GoTrue (přihlášení přes magic link / OTP), Inbucket (chytač e-mailů),
+nginx bránu, backend a frontend.
+
+Spuštění:
+
+```bash
+docker compose -f docker-compose.local.yml up --build
+```
+
+Po naběhnutí:
+
+- Frontend: <http://localhost:3000>
+- Backend API: <http://localhost:5000> (health: <http://localhost:5000/health>)
+- Supabase brána (auth + REST): <http://localhost:8000>
+- Inbucket (čtení e-mailů): <http://localhost:9000>
+
+Přihlášení (magic link):
+
+1. Na přihlašovací stránce zadej libovolný e-mail a nech si poslat odkaz.
+2. Otevři Inbucket na <http://localhost:9000>, najdi e-mail „Confirm Your Email“
+   a klikni na odkaz – GoTrue ověří token a přesměruje tě zpět do aplikace s aktivní relací.
+3. Při prvním přihlášení tě aplikace provede registrací profilu.
+
+Migrace z `database/*.sql` se aplikují automaticky při prvním startu (služba `migrate`).
+Při dalších spuštěních se přeskočí, pokud už schéma existuje. Pro úplný reset:
+
+```bash
+docker compose -f docker-compose.local.yml down -v
+```
+
+Poznámky a omezení:
+
+- OAuth (Google/Facebook) lokálně nefunguje (vyžaduje reálné providery) – používej magic link.
+- **Realtime není součástí** lokálního stacku (vyžaduje složitější nastavení).
+  Chat funguje (odeslání i načtení zpráv přes API), degraduje pouze živá aktualizace bez refreshe.
+- Backend ověřuje JWT symetrickým klíčem (HS256, `AppSettings__Supabase__JwtSecret`),
+  zatímco proti cloud Supabase používá asymetrické klíče z JWKS – obě cesty fungují současně.
+- `AppSettings__Supabase__InternalUrl` (např. `http://gateway:8000`) je adresa brány
+  dosažitelná z kontejneru backendu; `Url` zůstává veřejná (`http://localhost:8000`)
+  a používá se pro validaci issueru a ve frontendu.
 
 ```bash
 # Backend – build a jednotkové testy

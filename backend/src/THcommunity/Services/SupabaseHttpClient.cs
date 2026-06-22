@@ -32,7 +32,10 @@ public class SupabaseHttpClient : ISupabaseClient
         _logger = logger;
         
         var supabaseSettings = settings.Value.Supabase;
-        _httpClient.BaseAddress = new Uri($"{supabaseSettings.Url}/rest/v1/");
+        var restBaseUrl = !string.IsNullOrWhiteSpace(supabaseSettings.InternalUrl)
+            ? supabaseSettings.InternalUrl
+            : supabaseSettings.Url;
+        _httpClient.BaseAddress = new Uri($"{restBaseUrl}/rest/v1/");
         _httpClient.DefaultRequestHeaders.Add("apikey", supabaseSettings.SecretKey);
         _httpClient.DefaultRequestHeaders.Authorization = 
             new AuthenticationHeaderValue("Bearer", supabaseSettings.SecretKey);

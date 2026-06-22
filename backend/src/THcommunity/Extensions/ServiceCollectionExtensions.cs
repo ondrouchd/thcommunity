@@ -65,12 +65,18 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var supabaseUrl = configuration["AppSettings:Supabase:Url"] ?? throw new InvalidOperationException("Supabase:Url is required");
-        
+        var internalUrl = configuration["AppSettings:Supabase:InternalUrl"];
+        var jwtSecret = configuration["AppSettings:Supabase:JwtSecret"];
+
+        // Use the internal URL (e.g. a Docker service name) for reaching the auth server
+        // when configured, while issuer validation below still uses the public URL.
+        var authBaseUrl = !string.IsNullOrWhiteSpace(internalUrl) ? internalUrl : supabaseUrl;
+
         Console.WriteLine($"JWT Auth: Supabase URL = {supabaseUrl}");
         Console.WriteLine($"JWT Auth: Using JWKS endpoint for key validation");
-        
+
         // Fetch JWKS synchronously at startup
-        var jwksUrl = $"{supabaseUrl}/auth/v1/.well-known/jwks.json";
+        var jwksUrl = $"{authBaseUrl}/auth/v1/.well-known/jwks.json";
         Microsoft.IdentityModel.Tokens.JsonWebKeySet? jwks = null;
         
         try
@@ -84,7 +90,21 @@ public static class ServiceCollectionExtensions
         {
             Console.WriteLine($"JWT Auth: Failed to load JWKS: {ex.Message}");
         }
-        
+
+        // Collect signing keys: asymmetric keys from JWKS (Supabase cloud) and/or a
+        // symmetric HS256 key from the shared JWT secret (self-hosted GoTrue / local dev).
+        var signingKeys = new List<Microsoft.IdentityModel.Tokens.SecurityKey>();
+        if (jwks?.Keys != null)
+        {
+            signingKeys.AddRange(jwks.Keys);
+        }
+        if (!string.IsNullOrWhiteSpace(jwtSecret))
+        {
+            signingKeys.Add(new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                System.Text.Encoding.UTF8.GetBytes(jwtSecret)));
+            Console.WriteLine("JWT Auth: Added symmetric signing key from configured JWT secret");
+        }
+
         services.AddAuthentication("Bearer")
             .AddJwtBearer("Bearer", options =>
             {
@@ -99,7 +119,7 @@ public static class ServiceCollectionExtensions
                     ValidAudience = "authenticated",
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKeys = jwks?.Keys,
+                    IssuerSigningKeys = signingKeys,
                     NameClaimType = "sub"
                 };
                 

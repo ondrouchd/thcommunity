@@ -22,6 +22,9 @@ public class RegistrationSettings
 public class SupabaseSettings
 {
     public string Url { get; set; } = string.Empty;
+    // Optional URL reachable from the backend itself (e.g. a Docker service name).
+    // When set, REST and JWKS calls use it while JWT issuer validation still uses Url.
+    public string InternalUrl { get; set; } = string.Empty;
     public string PublishableKey { get; set; } = string.Empty;
     public string SecretKey { get; set; } = string.Empty;
     public string JwtSecret { get; set; } = string.Empty;
