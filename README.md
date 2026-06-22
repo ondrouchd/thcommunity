@@ -81,11 +81,41 @@ npm install
 npm run dev
 ```
 
-Případně celé prostředí přes Docker:
+Případně celé prostředí přes Docker – viz níže.
 
-```bash
-docker compose up --build
-```
+## Spuštění na localhostu přes Docker
+
+Celé řešení (backend + frontend) lze spustit jedním příkazem. Potřebujete jen
+nainstalovaný Docker s pluginem Compose.
+
+1. Vytvořte `.env` z šablony a doplňte Supabase údaje (Project Settings → API):
+
+   ```bash
+   cp .env.example .env
+   # vyplňte SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY
+   ```
+
+2. Sestavte a spusťte:
+
+   ```bash
+   docker compose up --build
+   ```
+
+3. Otevřete v prohlížeči:
+
+   - Frontend: <http://localhost:3000>
+   - Backend API + Swagger: <http://localhost:5000>
+   - Health check: <http://localhost:5000/health>
+
+Zastavení: `docker compose down`.
+
+Poznámky:
+
+- Backend naběhne i bez vyplněného Supabase, ale přihlášení a práce s daty
+  vyžadují platné Supabase údaje (autentizace, databáze a realtime běží na Supabase).
+- `VAPID_*` a `R2_*` proměnné jsou volitelné – bez nich jsou push notifikace,
+  resp. ukládání médií, vypnuté.
+- CORS na backendu je pro tento běh nastaven na `http://localhost:3000`.
 
 ## Testy a build
 

@@ -3,31 +3,42 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: thcommunity-backend
+    restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      # Frontend origin allowed by CORS (the dockerized SPA is served here)
+      - Frontend__Url=http://localhost:3000
+      # Supabase (read by both the REST client and JWT auth)
       - AppSettings__Supabase__Url=${SUPABASE_URL}
       - AppSettings__Supabase__PublishableKey=${SUPABASE_PUBLISHABLE_KEY}
       - AppSettings__Supabase__SecretKey=${SUPABASE_SECRET_KEY}
+      - Supabase__Url=${SUPABASE_URL}
+      - Supabase__PublishableKey=${SUPABASE_PUBLISHABLE_KEY}
+      - Supabase__SecretKey=${SUPABASE_SECRET_KEY}
+      # Cloudflare R2 (optional; without it a no-op storage is used)
       - AppSettings__Cloudflare__R2AccountId=${R2_ACCOUNT_ID}
       - AppSettings__Cloudflare__R2AccessKeyId=${R2_ACCESS_KEY}
       - AppSettings__Cloudflare__R2SecretAccessKey=${R2_SECRET_KEY}
       - AppSettings__Cloudflare__R2BucketName=thcommunity-media
-      - AppSettings__WebPush__VapidPublicKey=${VAPID_PUBLIC_KEY}
-      - AppSettings__WebPush__VapidPrivateKey=${VAPID_PRIVATE_KEY}
-      - AppSettings__WebPush__Subject=mailto:admin@thcommunity.cz
-      - Supabase__Url=${SUPABASE_URL}
-      - Supabase__PublishableKey=${SUPABASE_PUBLISHABLE_KEY}
-      - Supabase__SecretKey=${SUPABASE_SECRET_KEY}
       - Cloudflare__R2AccountId=${R2_ACCOUNT_ID}
       - Cloudflare__R2AccessKeyId=${R2_ACCESS_KEY}
       - Cloudflare__R2SecretAccessKey=${R2_SECRET_KEY}
+      # Web Push / VAPID (optional; without it push is disabled)
+      - Vapid__Subject=${VAPID_SUBJECT:-mailto:admin@thcommunity.cz}
+      - Vapid__PublicKey=${VAPID_PUBLIC_KEY}
+      - Vapid__PrivateKey=${VAPID_PRIVATE_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   frontend:
     build:
@@ -37,7 +48,10 @@ services:
         - VITE_SUPABASE_URL=${SUPABASE_URL}
         - VITE_SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
         - VITE_API_URL=http://localhost:5000
+    container_name: thcommunity-frontend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy

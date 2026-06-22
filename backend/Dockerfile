@@ -1,28 +1,29 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore
 COPY src/THcommunity/THcommunity.csproj src/THcommunity/
 RUN dotnet restore src/THcommunity/THcommunity.csproj
 
-# Copy everything and build
+# Copy everything and publish
 COPY . .
 WORKDIR /src/src/THcommunity
-RUN dotnet build -c Release -o /app/build
-
-# Publish stage
-FROM build AS publish
 RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
 
-# Create non-root user for security
-RUN adduser --disabled-password --gecos "" appuser
-USER appuser
+# curl is needed for the container healthcheck
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=publish /app/publish .
+# The .NET runtime image already ships with a non-root "app" user
+COPY --from=build /app/publish .
+USER app
+
+ENV ASPNETCORE_URLS=http://+:8080
 ENTRYPOINT ["dotnet", "THcommunity.dll"]
